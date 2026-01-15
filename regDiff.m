@@ -1,4 +1,4 @@
-% function [u,v] = regDiff(data, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, plotflag, diagflag)
+% function [u,v] = regDiff(data, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, minIter, plotflag, diagflag)
 % Luis Viornery (lviornery@cmu.edu), November 27, 2023, modified from code
 % by Rick Chartrand (rickc@lanl.gov)
 % Please cite <TBD>
@@ -50,6 +50,11 @@
 %                   therefore speed, while smaller values give more
 %                   accurate results with sharper jumps.
 %
+%       minIter     Parameter mimum number of iterations. Default value is
+%                   5. Early iterations can produce negative changes in
+%                   cost, resulting in fake convergence. Set this parameter
+%                   to prevent this behavior.
+%
 %       plotflag    Flag whether to display plot at each iteration.
 %                   Default is 0 (no).  Useful, but adds significant
 %                   running time.
@@ -67,7 +72,7 @@
 %       v           Estimate of the regularized second derivative of data,
 %                   calculated directly from the data
 
-function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, plotflag, diagflag)
+function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, minIter, plotflag, diagflag)
     % Make sure we have a column vector.
     data = data( : );
     % Get the data size.
@@ -98,11 +103,14 @@ function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, delta
     DFA2 = DF*A2;
     
     %set defaults
-    if nargin < 11 || isempty(diagflag)
+    if nargin < 12 || isempty(diagflag)
         diagflag = 0;
     end
-    if nargin < 10 || isempty(plotflag)
+    if nargin < 11 || isempty(plotflag)
         plotflag = 0;
+    end
+    if nargin < 10 || isempty(minIter)
+        minIter = 5;
     end
     if nargin < 9 || isempty(ep)
         ep = 1e-8;
@@ -162,9 +170,9 @@ function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, delta
         Ln = DT * En * D; % nxn
         % Gradient of functional.
         gn = DFA*u - DFb + alpha * Ln * u;
-        Hn = -(DFA + alpha*Ln);
+        Hn = DFA + alpha*Ln;
         s = Hn\gn;
-        u = u + s;
+        u = u - s;
         costn = norm(cumtrapz(u) - [0;datacomp],2) + alpha*norm(diff(u),1);
         if diagflag
             fprintf('u, iteration %4d: cost %.3e, relative change = %.3e\n',...
@@ -180,13 +188,13 @@ function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, delta
             end
             plot( u, 'ok' ), drawnow;
         end
-        if norm(s) / norm(u) < deltanormtol
+        if i > minIter && norm(s) / norm(u) < deltanormtol
             if diagflag
                 fprintf('u, delta norm tolerance reached \n')
             end
             break;
         end
-        if ~isempty(prevcost) && (prevcost - costn) / prevcost < deltacosttol
+        if ~isempty(prevcost) && i > minIter && (prevcost - costn) / prevcost < deltacosttol
             if diagflag
                 fprintf('u, relative cost tolerance reached \n')
             end
@@ -212,10 +220,10 @@ function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, delta
             Ln = DT * En * D;
             % Gradient of functional.
             gn = DFA2*v - DFb + alpha2 * Ln * v;% Prepare to solve linear equation.
-            Hn = -(DFA2 + alpha2*Ln);
+            Hn = DFA2 + alpha2*Ln;
             % Update solution.
             s = Hn\gn;
-            v = v + s;
+            v = v - s;
             costn = norm(cumtrapz(cumtrapz(v)) - [0;datacomp],2) + alpha2*norm(diff(v),1);
             if diagflag
                 fprintf('v, iteration %4d: cost %.3e, relative change = %.3e\n',...
@@ -229,13 +237,13 @@ function [u,v,ucost,vcost] = regDiff(data, alpha, alpha2, dx, u0, maxiter, delta
                 subplot(2,1,2)
                 plot( v, 'ok' ), drawnow;
             end
-            if norm(s) / norm(v) < deltanormtol
+            if i > minIter && norm(s) / norm(v) < deltanormtol
                 if diagflag
                     fprintf('v, delta norm tolerance reached \n')
                 end
                 break;
             end
-        if ~isempty(prevcost) && (prevcost - costn) / prevcost < deltacosttol
+        if ~isempty(prevcost) && i > minIter && (prevcost - costn) / prevcost < deltacosttol
             if diagflag
                 fprintf('v, relative cost tolerance reached \n')
             end
