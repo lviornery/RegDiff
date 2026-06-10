@@ -26,7 +26,8 @@ Python: (pip installation soon) Copy the python/regdiff folder into your working
 
 Some function parameters are named differently in the matlab and python implementations; these are noted below.
 
-```Inputs:
+```
+Inputs:
 data/raw_data                 Vector of data to be differentiated. Required.
 alpha                         Regularization parameter.
 alpha2                        Regularization parameter for second-order derivative. Skips second-order differentiation if omitted.
@@ -41,7 +42,8 @@ plotflag (matlab-only)        Flag whether to display plot at each iteration. De
 diagflag/diag                 Flag whether to display diagnostics at each iteration.  Default is 0/false.
 ```
 
-```Outputs:
+```
+Outputs:
 u           Estimate of the regularized derivative of data.
 v           Estimate of the regularized second derivative of data (if alpha2 is passed)
 ```
