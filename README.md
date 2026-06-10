@@ -56,9 +56,9 @@ The summary above has used a continuous-time formulation of the differentiation 
 
 First, we normalize the input to avoid numerical stability errors. We rescale the data so that the time interval is 1, the mean is 0, and the standard deviation is 1. For this reason, subsequent steps all lack any time-scaling.
 
-In order to generate an initial guess for $u[t]$ and perform integrations, we construct some helper matrices, namely the central finite difference and the cumulative trapezoidal integration matrices, using `matrixDiff` and `matrixAntiDiff`. The nth-order anti-differentiation matrix is particularly important; is is the matrix
+In order to generate an initial guess for $u[t]$ and perform integrations, we construct some helper matrices, namely the central finite difference and the cumulative trapezoidal integration matrices, using `matrixDiff` and `matrixAntiDiff`. The nth-order anti-differentiation matrix is particularly important; this is the matrix
 
-$$\mathbf{A}^n = (\Delta t)^n\begin{bmatrix}
+$$\mathbf{A}^n = \begin{bmatrix}
     0 & 0 & 0 & \cdots & 0\\\
     \frac{1}{2} & \frac{1}{2} & 0 & \cdots & 0\\\
     \frac{1}{2} & 1 & \frac{1}{2} & \cdots & 0\\\
@@ -122,7 +122,18 @@ With the initial guess for the derivative:
 
 `u = 0.6858   -0.4943   -1.1759   -0.7764    0.3369    1.1405    1.5031`
 
-We pre-calculate $\left(A^n\right)^Tf[t]$, which is constant, as
+We pre-calculate $DFA = \left(\left(A^n\right)^TA^n\right)$ and $DFb = \left(A^n\right)^Tf[t]$, which are constant, as
+
+```
+DFA =
+    1.5000    2.7500    2.2500    1.7500    1.2500    0.7500    0.2500
+    2.7500    5.2500    4.5000    3.5000    2.5000    1.5000    0.5000
+    2.2500    4.5000    4.2500    3.5000    2.5000    1.5000    0.5000
+    1.7500    3.5000    3.5000    3.2500    2.5000    1.5000    0.5000
+    1.2500    2.5000    2.5000    2.5000    2.2500    1.5000    0.5000
+    0.7500    1.5000    1.5000    1.5000    1.5000    1.2500    0.5000
+    0.2500    0.5000    0.5000    0.5000    0.5000    0.5000    0.2500
+```
 
 `DFb = -3.7665   -7.5809   -7.1345   -5.5121   -3.1134   -1.0515   -0.1302`
 
@@ -137,7 +148,7 @@ En =
          0         0         0         0         0    2.7576
 ```
 ```
-Lu =
+Ln =
     0.8474   -0.8474         0         0         0         0         0
    -0.8474    2.3145   -1.4671         0         0         0         0
          0   -1.4671    3.9701   -2.5030         0         0         0
@@ -147,7 +158,7 @@ Lu =
          0         0         0         0         0   -2.7576    2.7576
 ```
 
-This allows us to find the gradient and Hessian:
+This allows us to find the gradient $gn = DFA u[t] - DFb + \alpha  L(Du[t])  u[t]$ and Hessian $Hn = DFA + \alpha  L(Du[t])$:
 
 `gn = 1.0838    2.1673    2.0425    1.6478    1.0744    0.5785    0.1929`
 ```
