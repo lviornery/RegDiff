@@ -19,9 +19,9 @@ How to use:
 ---
 
 Matlab: install the regDiff mltbx file contained in releases. regDiff function should now be available in your environment
-  `regDiff(data, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, minIter, plotflag, diagflag)`
+  `regDiff(data, alpha, alpha2, dx, u0, minIter,  maxiter, deltacosttol, deltanormtol, ep,plotflag, diagflag)`
 
-Python: (pip installation soon) Copy the python/regdiff folder into your working directory. In your file, `from regdiff import reg_diff`
+Python: `pip install regdiff` or `pip install torchregdiff`. In your file, `from regdiff import reg_diff`
   `reg_diff(raw_data,alpha,alpha2=None,dx=1,u0=None,min_iter=5,max_iter=100,delta_cost_tol=1e-6,delta_norm_tol=1e-6,ep=1e-8,diag=False)`
 
 Some function parameters are named differently in the matlab and python implementations; these are noted below.
@@ -33,19 +33,23 @@ alpha                         Regularization parameter.
 alpha2                        Regularization parameter for second-order derivative. Skips second-order differentiation if omitted.
 dx                            Data spacing. Default is 1.
 u0                            Initialization of the derivatives. Default is to use a central difference method.
+minIter/min_iter              Parameter mimum number of iterations. Default value is 5.
 maxiter/max_iter              Maximum number of iterations to run the solver loop. Default is 100.
 deltacosttol/delta_cost_tol   Minimum relative change in the cost. Value below this terminates solver. Default is 1e-6.
 deltanormtol/delta_norm_tol   Minimum relative norm of adjustment. Value below this terminates solver. Default is 1e-6.
 ep                            Parameter for avoiding division by zero.  Default value is 1e-6.
-minIter/min_iter              Parameter mimum number of iterations. Default value is 5.
+skip_first_deriv_flag/        Flag whether to skip calculating the first derivative. Requires u0. Default is 0/false.
+skip_first_deriv
 plotflag (matlab-only)        Flag whether to display plot at each iteration. Default is 0.
 diagflag/diag                 Flag whether to display diagnostics at each iteration.  Default is 0/false.
 ```
 
 ```
 Outputs:
-u           Estimate of the regularized derivative of data.
+u           Estimate of the regularized derivative of data. (in python, u is not returned if skip_first_deriv is true)
 v           Estimate of the regularized second derivative of data (if alpha2 is passed)
+ucost       Total cost at the end of first-derivative optimization (matlab-only)
+vcost       Total cost at the end of second-derivative optimization (matlab-only)
 ```
 
 ---
