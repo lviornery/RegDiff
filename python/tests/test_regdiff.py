@@ -1,7 +1,7 @@
-from regdiff import regdiff
 import numpy as np
-import numpy.linalg as npl
-import scipy as sp
+
+import regdiff
+
 
 def test_matrix_diff():
     diff,diff2,d = regdiff.matrix_diff(5)
@@ -72,7 +72,7 @@ def test_reg_diff():
     u0 = np.zeros_like(test_x)
     u0 = np.stack((u0,u0))
 
-    dx,ddx = regdiff.reg_diff(test_x,0.001,0.01,u0=u0)
+    dx,ddx = regdiff.reg_diff(test_x,0.001,0.01,u0=u0,diag=True)
     assert np.allclose(dx,test_dx,atol=1e-4)
     assert np.allclose(ddx,test_ddx,atol=1e-4)
 

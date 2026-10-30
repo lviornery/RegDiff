@@ -1,0 +1,22 @@
+[project]
+name = "torchregdiff"
+version = "3.7"
+description = "Regularized differentiation of time-series as pytorch tensors"
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.5.4",
+    "scipy>=1.18.1",
+    "torch>=2.15.0",
+]
+
+[project.scripts]
+regdiff = "torchregdiff:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

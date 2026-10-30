@@ -1,0 +1,21 @@
+[project]
+name = "regdiff"
+version = "3.7"
+description = "Regularized differentiation of time-series as numpy ndarrays"
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.5.4",
+    "scipy>=1.18.1",
+]
+
+[project.scripts]
+regdiff = "regdiff:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

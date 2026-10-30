@@ -1,7 +1,6 @@
-% function [u,v] = regDiff(data, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, minIter, plotflag, diagflag)
+% function [u,v] = regDiff(data, alpha, alpha2, dx, u0, minIter, maxiter, deltacosttol, deltanormtol, ep, plotflag, diagflag)
 % Luis Viornery (lviornery@cmu.edu), November 27, 2023, modified from code
 % by Rick Chartrand (rickc@lanl.gov)
-% Please cite <TBD>
 %
 % Inputs:  (First three required; omitting the final N parameters for N < 7
 %           or passing in [] results in default values being used.) 
@@ -72,7 +71,7 @@
 %       v           Estimate of the regularized second derivative of data,
 %                   calculated directly from the data
 
-function [u,v,ucost,vcost] = regDiff(rawdata, alpha, alpha2, dx, u0, maxiter, deltacosttol, deltanormtol, ep, minIter, plotflag, diagflag)
+function [u,v,ucost,vcost] = regDiff(rawdata, alpha, alpha2, dx, u0, minIter, maxIter, deltacosttol, deltanormtol, ep, skip_first_deriv_flag, plotflag, diagflag)
     % Make sure we have a column vector.
     data = rawdata( : );
     % Get the data size.
@@ -103,26 +102,29 @@ function [u,v,ucost,vcost] = regDiff(rawdata, alpha, alpha2, dx, u0, maxiter, de
     DFA2 = DF*A2;
     
     %set defaults
-    if nargin < 12 || isempty(diagflag)
+    if nargin < 13 || isempty(diagflag)
         diagflag = 0;
     end
-    if nargin < 11 || isempty(plotflag)
+    if nargin < 12 || isempty(plotflag)
         plotflag = 0;
     end
-    if nargin < 10 || isempty(minIter)
-        minIter = 5;
+    if nargin < 11 || isempty(skip_first_deriv_flag)
+        skip_first_deriv_flag = 0;
     end
-    if nargin < 9 || isempty(ep)
+    if nargin < 10 || isempty(ep)
         ep = 1e-8;
     end
-    if nargin < 8 || isempty(deltanormtol)
+    if nargin < 9 || isempty(deltanormtol)
         deltanormtol = 1e-6;
     end
-    if nargin < 7 || isempty(deltacosttol)
+    if nargin < 8 || isempty(deltacosttol)
         deltacosttol = 1e-6;
     end
-    if nargin < 6 || isempty(maxiter)
-        maxiter = 100000;
+    if nargin < 7 || isempty(maxIter)
+        maxIter = 100000;
+    end
+    if nargin < 6 || isempty(minIter)
+        minIter = 5;
     end
 
     % Default initialization of derivatives is central difference.
@@ -155,52 +157,54 @@ function [u,v,ucost,vcost] = regDiff(rawdata, alpha, alpha2, dx, u0, maxiter, de
     
     %First order differentiation
     ofst1 = data(1);
-    datacomp = data(2:end) - ofst1;
-    DFb = DF*datacomp;
-    if diagflag
-        ucost = norm(cumtrapz(u) - [0;datacomp],2) + alpha*norm(diff(u),1);
-    else
-        ucost = [];
-    end
-    prevcost = [];
-    for i = 1:maxiter
-        % Diagonal matrix of 1/|u'|
-        En = spdiags(1./(sqrt(diff(u).^2 + ep)), 0, n-1, n-1);
-        % Linearized diffusion matrix, also approximation of Hessian.
-        Ln = DT * En * D; % nxn
-        % Gradient of functional.
-        gn = DFA*u - DFb + alpha * Ln * u;
-        Hn = DFA + alpha*Ln;
-        s = Hn\gn;
-        u = u - s;
-        costn = norm(cumtrapz(u) - [0;datacomp],2) + alpha*norm(diff(u),1);
+    if ~skip_first_deriv_flag
+        datacomp = data(2:end) - ofst1;
+        DFb = DF*datacomp;
         if diagflag
-            fprintf('u, iteration %4d: cost %.3e, relative change = %.3e\n',...
-                i,...
-                costn,...
-                norm(s) / norm(u));
-            ucost = [ucost;costn];
+            ucost = norm(cumtrapz(u) - [0;datacomp],2) + alpha*norm(diff(u),1);
+        else
+            ucost = [];
         end
-        % Display plot.
-        if plotflag
-            if secondDeriv
-                subplot(2,1,1)
-            end
-            plot( u, 'ok' ), drawnow;
-        end
-        if i > minIter && norm(s) / norm(u) < deltanormtol
+        prevcost = [];
+        for i = 1:maxIter
+            % Diagonal matrix of 1/|u'|
+            En = spdiags(1./(sqrt(diff(u).^2 + ep)), 0, n-1, n-1);
+            % Linearized diffusion matrix, also approximation of Hessian.
+            Ln = DT * En * D; % nxn
+            % Gradient of functional.
+            gn = DFA*u - DFb + alpha * Ln * u;
+            Hn = DFA + alpha*Ln;
+            s = Hn\gn;
+            u = u - s;
+            costn = norm(cumtrapz(u) - [0;datacomp],2) + alpha*norm(diff(u),1);
             if diagflag
-                fprintf('u, delta norm tolerance reached \n')
+                fprintf('u, iteration %4d: cost %.3e, relative change = %.3e\n',...
+                    i,...
+                    costn,...
+                    norm(s) / norm(u));
+                ucost = [ucost;costn];
             end
-            break;
-        end
-        if ~isempty(prevcost) && i > minIter && (prevcost - costn) / prevcost < deltacosttol
-            if diagflag
-                fprintf('u, relative cost tolerance reached \n')
+            % Display plot.
+            if plotflag
+                if secondDeriv
+                    subplot(2,1,1)
+                end
+                plot( u, 'ok' ), drawnow;
             end
-            break;
+            if i > minIter && norm(s) / norm(u) < deltanormtol
+                if diagflag
+                    fprintf('u, delta norm tolerance reached \n')
+                end
+                break;
+            end
+            if ~isempty(prevcost) && i > minIter && (prevcost - costn) / prevcost < deltacosttol
+                if diagflag
+                    fprintf('u, relative cost tolerance reached \n')
+                end
+                break;
+            end
+            prevcost = costn;
         end
-        prevcost = costn;
     end
     
     if secondDeriv%Second-order differentiation
@@ -213,7 +217,7 @@ function [u,v,ucost,vcost] = regDiff(rawdata, alpha, alpha2, dx, u0, maxiter, de
             vcost = [];
         end
         prevcost = [];
-        for i = 1:maxiter
+        for i = 1:maxIter
             % Diagonal matrix of 1/|v'|
             En = spdiags(1./(sqrt(diff(v).^2 + ep)), 0, n-1, n-1);
             % Linearized diffusion matrix, also approximation of Hessian.
@@ -259,7 +263,7 @@ end
 
 
 %% Copyright notice
-% Copyright 2023 Luis Viornery.
+% Copyright 2026 Luis Viornery.
 
 %% Original Copyright notice:
 % Copyright 2010. Los Alamos National Security, LLC. This material
