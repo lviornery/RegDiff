@@ -19,10 +19,10 @@ How to use:
 ---
 
 Matlab: install the regDiff mltbx file contained in releases. regDiff function should now be available in your environment
-  `regDiff(data, alpha, alpha2, dx, u0, minIter,  maxiter, deltacosttol, deltanormtol, ep,plotflag, diagflag)`
+  `regDiff(data, alpha, alpha2, dx, u0, minIter,  maxIter, deltacosttol, deltanormtol, ep, skip_first_deriv_flag, plotflag, diagflag)`
 
 Python: `pip install regdiff` or `pip install torchregdiff`. In your file, `from regdiff import reg_diff`
-  `reg_diff(raw_data,alpha,alpha2=None,dx=1,u0=None,min_iter=5,max_iter=100,delta_cost_tol=1e-6,delta_norm_tol=1e-6,ep=1e-8,diag=False)`
+  `reg_diff(raw_data,alpha,alpha2=None,dx=1,u0=None,min_iter=5,max_iter=100,delta_cost_tol=1e-6,delta_norm_tol=1e-6,ep=1e-8,skip_first_deriv=False,diag=False)`
 
 Some function parameters are named differently in the matlab and python implementations; these are noted below.
 
@@ -34,7 +34,7 @@ alpha2                        Regularization parameter for second-order derivati
 dx                            Data spacing. Default is 1.
 u0                            Initialization of the derivatives. Default is to use a central difference method.
 minIter/min_iter              Parameter mimum number of iterations. Default value is 5.
-maxiter/max_iter              Maximum number of iterations to run the solver loop. Default is 100.
+maxIter/max_iter              Maximum number of iterations to run the solver loop. Default is 100.
 deltacosttol/delta_cost_tol   Minimum relative change in the cost. Value below this terminates solver. Default is 1e-6.
 deltanormtol/delta_norm_tol   Minimum relative norm of adjustment. Value below this terminates solver. Default is 1e-6.
 ep                            Parameter for avoiding division by zero.  Default value is 1e-6.
